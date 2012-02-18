@@ -14,6 +14,8 @@ const int LAST_BYTE = (1 << BITS_IN_BYTE) - 1;
 const int BYTES_IN_INT = 4;
 const int MAX_NUM_OF_BITS = 16;
 
+vector<unsigned short> result_;
+
 struct FileInfo
 {
 	FileInfo( int fnl, string fn, int nb ): fileNameLength( fnl ), fileName( fn ), numOfBytes( nb ){};
@@ -79,6 +81,7 @@ void printBits( ofstream& os, unsigned short n )
 	unsigned char ch1 = ( ( n & ( ( ( 1 << BITS_IN_BYTE ) - 1 ) << BITS_IN_BYTE ) ) >> BITS_IN_BYTE);
 	unsigned char ch2 = ( n &  (( 1 << BITS_IN_BYTE ) - 1 ) );
 	os << ch1 << ch2;
+	result_.push_back(n);
 }
 
 unsigned short getBits( ifstream& is, unsigned short n )
@@ -133,7 +136,7 @@ private:
 		for (vector<FileInfo>::iterator it = fileInfos.begin(); it != fileInfos.end(); ++it )
 		{
 			printInt( os, it->fileNameLength );
-			os.write( it->fileName.c_str(), it->fileName.length() );
+			os.write( "jnput.txt"/*it->fileName.c_str()?\*/, it->fileName.length() );
 			printInt( os, it->numOfBytes );
 		}
 	}
@@ -141,19 +144,21 @@ private:
 	void getResult( )
 	{	
 		string str = "";
-		char ch;
+		unsigned char ch, ch1;
 		for ( vector<string>::iterator it = fileNames->begin(); it != fileNames->end(); ++it )
 		{
 			ifstream is;
 			is.open( it->c_str(), ios::binary );
 			if ( it == fileNames->begin() )
 			{
-				str = is.get();
+				ch1 = is.get();
+				str = "";
+				str += ch1;
 			}
 			while ( !is.eof() )
 			{
 				ch = is.get();
-				if ( stringTable.find(str + ch) != stringTable.end() )
+				if ( stringTable.find(str + (char)ch) != stringTable.end() )
 				{
 					str += ch;
 				}
@@ -162,7 +167,7 @@ private:
 					printBits(os, stringTable[str]);
 					if ( lastString < ( 1 << MAX_NUM_OF_BITS ) - 1 )
 					{
-						stringTable[str + ch] = ++lastString;
+						stringTable[str + (char)ch] = lastString++;
 					}
 					str = ch;
 				}
@@ -187,12 +192,13 @@ public:
 	{
 		bytesDecoded = 0;
 		pos = 0;
-		for ( unsigned int lastString = 0; lastString < (1 << MAX_NUM_OF_BITS); ++lastString )
+		for ( lastString = 0; lastString < (1 << MAX_NUM_OF_BITS); ++lastString )
 		{
 			stringTable[lastString] = "";
 			if ( lastString < (1 << BITS_IN_BYTE) )
 				stringTable[lastString] += (unsigned char)lastString;
 		}
+		lastString = 256;
 	}
 
 	int decode()
@@ -244,29 +250,44 @@ private:
 			{
 				str = stringTable[newCode];
 			}
-			os << str;
-			bytesDecoded += str.length();
-			if ( bytesDecoded == curFile->numOfBytes )
+			if ( bytesDecoded + str.length() > curFile->numOfBytes )
+			{
+				os << str.substr(0, curFile->numOfBytes - bytesDecoded);
+				bytesDecoded = curFile->numOfBytes;
+			}
+			else
+			{
+				os << str;
+				bytesDecoded += str.length();
+			}
+			if ( bytesDecoded >= curFile->numOfBytes )
 			{
 				os.close();
 				++curFile;
 				if ( curFile == fileInfos.end() )
+				{
+					is.get();
 					break;
+				}
 				os.open( curFile->fileName.c_str(), ios::binary );
 			}
 			ch = str[0];
 			if (lastString < (1 << MAX_NUM_OF_BITS) - 1)
-				stringTable[lastString++] = "" + (unsigned char) oldCode + ch;
+			{	
+				string tmp = stringTable[oldCode];
+				tmp += ch;
+				stringTable[lastString++] = tmp;
+			}
 			oldCode = newCode;
 		}
-		//if ( curFile != fileInfos.end() || !is.eof() )
-		//	throw "Archive is corrupted";
-
+		curFile = curFile;
+		if ( curFile != fileInfos.end() || !is.eof() )
+			throw "Archive is corrupted";
 	}
 	string inFileName;
 	string input;
 	int pos;
-	int bytesDecoded;
+	__int64 bytesDecoded;
 	unsigned int lastString;
 	string stringTable[1 << MAX_NUM_OF_BITS];
 };
@@ -275,9 +296,9 @@ int main()
 {
 	vector<string>fileNames;
 	fileNames.push_back( "input.txt" );
-	Encoder encoder = Encoder( &fileNames, "output.txt" );
-	encoder.encode();
-	//Decoder decoder = Decoder( "output.txt" );
-	//decoder.decode();
+	//Encoder encoder = Encoder( &fileNames, "output2.txt" );
+	//encoder.encode();
+	Decoder decoder = Decoder( "output2.txt" );
+	decoder.decode();
 	return 0;
 }
