@@ -181,8 +181,6 @@ void HuffmanDecoder::getFrequences( )
 	for ( unsigned int i = 0; i < 256; ++i )
 	{
 		unsigned int fr = getInt( input.c_str() + pos );
-		if ( i == 255 )
-			i = i;
 		pos += 4;
 		freq[i] = fr;
 	}

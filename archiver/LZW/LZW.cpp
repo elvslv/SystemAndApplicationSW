@@ -16,11 +16,10 @@ LZWEncoder::LZWEncoder( vector<string>* fns, string outputfns ): fileNames(fns),
 		throw "The list of input files is empty";
 	for (vector<string>::iterator it = fileNames->begin(); it != fileNames->end(); ++it)
 	{
-		ifstream is;
-		is.open( it->c_str(), ios::binary );
-		is.seekg( 0, ios::end );
-		fileInfos.push_back( FileInfo( it->length(), *it, is.tellg( ) ) );
-		is.close( );
+		string tmp;
+		readFile( *it, tmp );
+		input += tmp;
+		fileInfos.push_back( FileInfo( it->length(), *it, tmp.length() ) );
 	}
 	numOfBytes = input.length();
 	for ( lastString = 0; lastString < LAST_BYTE + 1; ++lastString )
@@ -47,7 +46,7 @@ void LZWEncoder::printMetadata( )
 	for (vector<FileInfo>::iterator it = fileInfos.begin(); it != fileInfos.end(); ++it )
 	{
 		printInt( os, it->fileNameLength );
-		os.write( "jnput.txt"/*it->fileName.c_str()?\*/, it->fileName.length() );
+		os.write( it->fileName.c_str(), it->fileName.length() );
 		printInt( os, it->numOfBytes );
 	}
 }
@@ -55,21 +54,23 @@ void LZWEncoder::printMetadata( )
 void LZWEncoder::getResult( )
 {	
 	string str = "";
-	unsigned char ch, ch1;
-	for ( vector<string>::iterator it = fileNames->begin(); it != fileNames->end(); ++it )
+	char ch, ch1;
+	for ( vector<FileInfo>::iterator it = fileInfos.begin(); it != fileInfos.end(); ++it )
 	{
 		ifstream is;
-		is.open( it->c_str(), ios::binary );
-		if ( it == fileNames->begin() )
+		is.open( it->fileName.c_str(), ios::binary );
+		if ( it == fileInfos.begin() )
 		{
 			ch1 = is.get();
 			str = "";
 			str += ch1;
 		}
-		while ( !is.eof() )
+		unsigned int bytesDecoded = 1;
+		while ( !is.eof() &&  bytesDecoded < it->numOfBytes )
 		{
 			ch = is.get();
-			if ( stringTable.find(str + (char)ch) != stringTable.end() )
+			++bytesDecoded;
+			if ( stringTable.find(str + ch) != stringTable.end() )
 			{
 				str += ch;
 			}
@@ -78,7 +79,7 @@ void LZWEncoder::getResult( )
 				printBits(os, stringTable[str]);
 				if ( lastString < ( 1 << MAX_NUM_OF_BITS ) - 1 )
 				{
-					stringTable[str + (char)ch] = lastString++;
+					stringTable[str + ch] = lastString++;
 				}
 				str = ch;
 			}
@@ -99,6 +100,7 @@ LZWDecoder::LZWDecoder( string infile, string d ): inFileName(infile), dir(d)
 			stringTable[lastString] += (unsigned char)lastString;
 	}
 	lastString = 256;
+	dir += "\\";
 }
 
 int LZWDecoder::decode()
@@ -129,9 +131,21 @@ void LZWDecoder::getResult()
 {
 	vector<FileInfo>::iterator curFile = fileInfos.begin();
 	ofstream os;
-	string path = dir;
+	string path;		
+	path = dir;
 	path += curFile->fileName;
 	os.open( path.c_str(), ios::binary );
+	while ( curFile != fileInfos.end() && !curFile->numOfBytes )
+	{
+		os.close();		
+		compareFiles( curFile->fileName, path );
+		++curFile;
+		if ( curFile == fileInfos.end() )
+			return;
+		path = dir;
+		path += curFile->fileName;
+		os.open( path.c_str(), ios::binary );
+	}
 	unsigned short oldCode;
 	oldCode = is.get() << BITS_IN_BYTE | is.get();
 	unsigned char ch = oldCode;
@@ -162,6 +176,7 @@ void LZWDecoder::getResult()
 		}
 		if ( bytesDecoded >= curFile->numOfBytes )
 		{
+			bytesDecoded = 0;
 			os.close();
 			compareFiles( curFile->fileName, path );
 			++curFile;
@@ -173,6 +188,19 @@ void LZWDecoder::getResult()
 			path = dir;
 			path += curFile->fileName;
 			os.open( path.c_str(), ios::binary );
+			while ( curFile != fileInfos.end() && !curFile->numOfBytes )
+			{
+				//is.get();
+				//is.get();
+				os.close();		
+				compareFiles( curFile->fileName, path );
+				++curFile;
+				if ( curFile == fileInfos.end() )
+					return;
+				path = dir;
+				path += curFile->fileName;
+				os.open( path.c_str(), ios::binary );
+			}
 		}
 		ch = str[0];
 		if (lastString < (1 << MAX_NUM_OF_BITS) - 1)
@@ -184,7 +212,7 @@ void LZWDecoder::getResult()
 		oldCode = newCode;
 	}
 	curFile = curFile;
-	//is.get();
+	is.get();
 	bool b1 = is.eof();
 	bool b2 = curFile != fileInfos.end();
 	if ( b2 || !b1 )

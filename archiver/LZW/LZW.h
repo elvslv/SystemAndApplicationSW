@@ -26,7 +26,7 @@ private:
 	string input;
 	int numOfBytes;
 	map<string, unsigned short> stringTable;
-	int lastString;
+	unsigned int lastString;
 };
 
 class LZWDecoder: public LZW, public Decoder
