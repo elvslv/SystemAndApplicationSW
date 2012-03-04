@@ -66,10 +66,26 @@ void LZWEncoder::getResult( )
 			str += ch1;
 		}
 		unsigned int bytesDecoded = 1;
+		bool f1 = false, f2 = false, f3 = false;
 		while ( !is.eof() &&  bytesDecoded < it->numOfBytes )
 		{
 			ch = is.get();
 			++bytesDecoded;
+			if ( bytesDecoded > 1000000 && !f1 )
+			{
+				f1 = true;
+				cerr << 1000000;
+			}
+			else if (bytesDecoded > 5000000 && !f2 )
+			{
+				f2 = true;
+				cerr << 5000000;
+			}
+			else if (bytesDecoded > 10000000 && !f3 )
+			{
+				f3 = true;
+				cerr << 10000000;
+			}
 			if ( stringTable.find(str + ch) != stringTable.end() )
 			{
 				str += ch;
