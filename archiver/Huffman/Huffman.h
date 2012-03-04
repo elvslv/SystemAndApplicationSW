@@ -6,16 +6,14 @@
 
 using namespace std;
 
-typedef pair<int, int> metadataCode;
-
 class Node
 {
 public:
 	Node( ){}
 
-	Node( Node* l, Node* r, vector<unsigned char>* sym, int f ): left( l ), right( r ), symbols( sym ), freq( f ){}
+	Node( Node* l, Node* r, vector<unsigned char>* sym, intType f ): left( l ), right( r ), symbols( sym ), freq( f ){}
 
-	int getFreq( )
+	intType getFreq( )
 	{
 		return freq;
 	}
@@ -44,7 +42,7 @@ private:
 	Node* left;
 	Node* right;
 	vector<unsigned char>* symbols;
-	int freq;
+	intType freq;
 };
 
 
@@ -56,7 +54,7 @@ protected:
 	void initQueue( );
 
 	vector<FileInfo> fileInfos;	
-	int freq[1 << BITS_IN_BYTE];
+	intType freq[1 << BITS_IN_BYTE];
 	priority_queue<Node*, vector<Node*>, Node> pq;
 };
 
@@ -74,9 +72,8 @@ private:
 	vector<string>* fileNames;
 	string outputFileName;
 	string input;
-	int numOfBytes;
+	intType numOfBytes;
 	(vector<int> chCodes)[1 << BITS_IN_BYTE];
-	metadataCode metadataCodes[1 << BITS_IN_BYTE];
 	queue<unsigned char> result;
 	bool several;
 };
@@ -94,7 +91,7 @@ private:
 	string inFileName;
 	string dir;
 	string input;
-	int pos;
-	int bytesDecoded;
+	intType pos;
+	intType bytesDecoded;
 };
 #endif //HUFFMAN_H

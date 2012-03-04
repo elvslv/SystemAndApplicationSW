@@ -24,7 +24,7 @@ private:
 	vector<string>* fileNames;
 	string outputFileName;
 	string input;
-	int numOfBytes;
+	intType numOfBytes;
 	map<string, unsigned short> stringTable;
 	unsigned int lastString;
 };
@@ -41,8 +41,8 @@ private:
 	string inFileName;
 	string dir;
 	string input;
-	int pos;
-	__int64 bytesDecoded;
+	intType pos;
+	intType bytesDecoded;
 	unsigned int lastString;
 	string stringTable[1 << MAX_NUM_OF_BITS];
 };

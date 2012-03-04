@@ -6,7 +6,7 @@ using namespace std;
 
 void Huffman::initQueue()
 {	
-	int num = 0;
+	intType num = 0;
 	for ( unsigned int i = 0; i < (1 << BITS_IN_BYTE); ++i )
 	{
 		if ( !freq[i] )
@@ -17,7 +17,7 @@ void Huffman::initQueue()
 		pq.push( node );
 		++num;
 	}
-	for ( int i = 0; i < num - 1; ++i )
+	for ( intType i = 0; i < num - 1; ++i )
 	{
 		Node* left = pq.top();
 		pq.pop( );
@@ -46,7 +46,7 @@ HuffmanEncoder::HuffmanEncoder( vector<string>* fns, string outputfns ): fileNam
 		fileInfos.push_back( FileInfo( it->length(), *it, tmp.length() ) );
 	}
 	numOfBytes = input.length();
-	memset( freq, 0, 256 * sizeof(int) );
+	memset( freq, 0, 256 * sizeof(intType) );
 }
 
 int HuffmanEncoder::encode()
@@ -162,16 +162,16 @@ int HuffmanDecoder::decode( )
 }
 void HuffmanDecoder::fillMetadata( )
 {
-	int filesNum = getInt( input.c_str() ); 
-	pos += 4;
+	intType filesNum = getInt( input.c_str() ); 
+	pos += BYTES_IN_INT;
 	for ( int i = 0; i < filesNum; ++i )
 	{
-		int fileNameLength = getInt( input.c_str() + pos );
-		pos += 4;
+		intType fileNameLength = getInt( input.c_str() + pos );
+		pos += BYTES_IN_INT;
 		string fileName = input.substr( pos, fileNameLength );
 		pos += fileNameLength;
-		int fileLength = getInt( input.c_str() + pos );
-		pos += 4;
+		intType fileLength = getInt( input.c_str() + pos );
+		pos += BYTES_IN_INT;
 		fileInfos.push_back( FileInfo( fileNameLength, fileName, fileLength ) );
 	}
 }
@@ -180,8 +180,8 @@ void HuffmanDecoder::getFrequences( )
 {
 	for ( unsigned int i = 0; i < 256; ++i )
 	{
-		unsigned int fr = getInt( input.c_str() + pos );
-		pos += 4;
+		intType fr = getInt( input.c_str() + pos );
+		pos += BYTES_IN_INT;
 		freq[i] = fr;
 	}
 }
@@ -204,7 +204,6 @@ int HuffmanDecoder::getResult( )
 	int j = BITS_IN_BYTE - 1;
 	string::iterator it = input.begin();
 	unsigned char sym = *it++;
-	queue<int> result_bits1;
 	while ( it != input.end() && curFile != fileInfos.end())
 	{
 		if ( !( root->getLeft() && root->getRight() ) )
@@ -260,7 +259,6 @@ int HuffmanDecoder::getResult( )
 		while ( root->getLeft() && root->getRight() )
 		{
 			int b = ( sym & ( 1 << j ) ) >> j;
-			result_bits1.push(b);
 			root = b ? root->getRight() : root->getLeft();
 			--j;
 		}

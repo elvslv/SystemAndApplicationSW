@@ -4,11 +4,11 @@
 
 using namespace std;
 
-char* readBuffer( ifstream &is, int& l )
+char* readBuffer( ifstream &is, intType& l )
 {
 	char* buffer;
 	is.seekg( 0, ios::end );
-	__int64 length = is.tellg( );
+	intType length = is.tellg( );
 	is.seekg( 0, ios::beg );
 	buffer = new char [length];
 	is.read( buffer,length );
@@ -20,7 +20,7 @@ void readFile( string fileName, string& result )
 {
 	ifstream is;
 	char* buffer;
-	int length;
+	intType length;
 	is.open( fileName.c_str(), ios::binary );
 	buffer = readBuffer( is, length );
 	is.close( );
@@ -33,7 +33,8 @@ int compareFiles( string frstFile, string scndFile )
 	ifstream is;
 	char* buffer1;
 	char* buffer2;
-	int length1, length2, result;
+	intType length1, length2;
+	int result;
 	is.open( frstFile.c_str(), ios::binary );
 	buffer1 = readBuffer( is, length1 );
 	is.close();
@@ -46,7 +47,7 @@ int compareFiles( string frstFile, string scndFile )
 	return result;
 }
 
-void printInt( ofstream& os, int n )
+void printInt( ofstream& os, intType n )
 {
 	for ( int i = ( (BYTES_IN_INT - 1) * BITS_IN_BYTE ); i >= 0; i -= BITS_IN_BYTE )
 	{
@@ -55,9 +56,9 @@ void printInt( ofstream& os, int n )
 	}
 }
 
-unsigned int getInt( const char* buffer )
+intType getInt( const char* buffer )
 {
-	unsigned int result = 0;
+	intType result = 0;
 	for ( int i = 0; i < BYTES_IN_INT; i += 1 )
 	{
 		result = (result << BITS_IN_BYTE) | (unsigned char)buffer[i];
@@ -65,9 +66,9 @@ unsigned int getInt( const char* buffer )
 	return result;
 }
 
-unsigned int getIntFromStream( ifstream &is )
+intType getIntFromStream( ifstream &is )
 {
-	unsigned int result = 0;
+	intType result = 0;
 	for ( int i = 0; i < BYTES_IN_INT; i += 1 )
 	{
 		result = (result << BITS_IN_BYTE) | is.get();
