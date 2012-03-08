@@ -179,7 +179,7 @@ void LZWDecoder::getResult()
 		}
 		if ( bytesDecoded >= curFile->numOfBytes )
 		{
-			bytesDecoded = 0;
+			bytesDecoded = 1;
 			os.close();
 			compareFiles( curFile->fileName, path );
 			++curFile;
