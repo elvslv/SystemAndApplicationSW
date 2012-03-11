@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
 	priority['+'] = priority['-'] = 1;
 	priority['*'] = priority['/'] = 2;
 	priority['^'] = 3;
+	priority['_'] = 4; //unary minus
 	opType prevOp = opUndef;
 	istringstream iss(input);
 	try
@@ -53,33 +54,15 @@ int main(int argc, char* argv[])
 			char ch;
 			iss >> ch;
 			cnt += 1;
-			if ( ch >= '0' && ch <= '9' || ch == '.' || 
-				((ch == '-' || ch == '+') && prevOp != opNumber && prevOp != opCloseBracket)) //parse double
+			if ( ch >= '0' && ch <= '9' || ch == '.')
 			{
 				string num = "";
-				char pref = '+';
-				while ( ch == '-' || ch == '+' )
-				{
-					if ( ch == '-' )
-						pref = (pref == '-') ? '+' : '-';
-					if ( !iss.eof() )
-					{
-						iss >> ch;
-						cnt += 1;
-					}
-					else 
-						throw "Invalid expression";
-				}
-				if ( !(ch >= '0' && ch <= '9' || ch == '.') )
-					throw "Invalid expresstion";
-				if ( pref == '-' )
-					num += pref;
 				if ( !iss.eof() )
 				{
 					do
 					{
 						if ( ch == '.' && num.find('.') != -1 )
-							throw "Invalid exception";
+							throw "Invalid espression";
 						num += ch;
 						iss.get(ch);
 						cnt += 1;
@@ -98,16 +81,35 @@ int main(int argc, char* argv[])
 			}
 			else if ( ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^' )
 			{
-				while ( st.size() && (ch == '^' ? 
-					priority[ch] < priority[st.top()] : 
-					priority[ch] <= priority[st.top()]) )
+				if ( ( ch == '+' || ch == '-' ) && prevOp != opNumber && prevOp != opCloseBracket ) //unary
 				{
-					result.push_back( string(1, st.top()) );
-					st.pop();
+					char res = '+';
+					while( !iss.eof() && ( ch == '+' || ch == '-' ) )
+					{
+						if ( ch == '-' )
+							res = res == '+' ? '-' : '+';
+						iss.get(ch);
+						cnt += 1;
+					}
+					if ( iss.eof() )
+						throw "Invalid expression";
+					iss.putback( ch );
+					cnt -= 1;
+					if ( res == '-' )
+						st.push('_');
 				}
-				st.push(ch);
-				prevOp = opOperator;
-
+				else
+				{
+					while ( st.size() && (ch == '^' ? 
+						priority[ch] < priority[st.top()] : 
+						priority[ch] <= priority[st.top()]) )
+					{
+						result.push_back( string(1, st.top()) );
+						st.pop();
+					}
+					st.push(ch);
+					prevOp = opOperator;
+				}
 			}
 			else if ( ch == ')' )
 			{
@@ -118,8 +120,6 @@ int main(int argc, char* argv[])
 				}
 				st.pop();
 				prevOp = opCloseBracket;
-				//iss >> ch;//
-
 			} 
 			else if ( !(ch == ' ' || ch == '\t' ) )
 				throw "Invalid expression";
@@ -127,7 +127,7 @@ int main(int argc, char* argv[])
 		while ( st.size() )
 		{
 			char ch = st.top();
-			if ( !(ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^') )
+			if ( !(ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^' || ch == '_') )
 				throw "Invalid expression";
 			result.push_back( string(1, ch) );
 			st.pop();
@@ -138,27 +138,35 @@ int main(int argc, char* argv[])
 				rpnStack.push(from_string<double>(*it, std::dec));
 			else
 			{
+				double res;
 				double a1 = rpnStack.top();
 				rpnStack.pop();
-				double a2 = rpnStack.top();
-				rpnStack.pop();
-				double res;
-				if ( *it == "+" )
-					res = a1 + a2;
-				else if ( *it == "-" )
-					res = a2 - a1;
-				else if ( *it == "*" )
-					res = a1 * a2;
-				else if ( *it == "/" )
+				if ( *it == "_")
 				{
-					if ( !a1 )
-						throw "Division by zero";
-					res = a2 / a1;
+					res = -a1;
 				}
-				else if ( *it == "^" )
-					res = pow( a2, a1 );
 				else
-					throw "Invalid operation";
+				{
+					double a2 = rpnStack.top();
+					rpnStack.pop();
+					
+					if ( *it == "+" )
+						res = a1 + a2;
+					else if ( *it == "-" )
+						res = a2 - a1;
+					else if ( *it == "*" )
+						res = a1 * a2;
+					else if ( *it == "/" )
+					{
+						if ( !a1 )
+							throw "Division by zero";
+						res = a2 / a1;
+					}
+					else if ( *it == "^" )
+						res = pow( a2, a1 );
+					else
+						throw "Invalid operation";
+				}
 				if ( _isnan( res ) || !_finite( res ) )
 				{
 					throw "Precision error";
