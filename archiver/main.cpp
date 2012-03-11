@@ -59,8 +59,8 @@ int main( int argc, char* argv[] )
 				HuffmanDecoder( inputFiles[0], dir ).decode();
 		}
 		cout << "Finished" << endl;
-		/*char ch;
-		cin >> ch;*/
+		//char ch;
+		//cin >> ch;
 	}
 	catch (char* str)
 	{

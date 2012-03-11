@@ -59,16 +59,22 @@ void LZWEncoder::getResult( )
 	{
 		ifstream is;
 		is.open( it->fileName.c_str(), ios::binary );
+		intType bytesDecoded = 0;
 		if ( it == fileInfos.begin() )
 		{
 			ch1 = is.get();
 			str = "";
 			str += ch1;
+			bytesDecoded += 1;
 		}
-		intType bytesDecoded = 1;
+		
 		bool f1 = false, f2 = false, f3 = false;
 		while ( !is.eof() &&  bytesDecoded < it->numOfBytes )
 		{
+			if ( bytesDecoded == 3197189 )
+			{
+				bytesDecoded = bytesDecoded;
+			}
 			ch = is.get();
 			++bytesDecoded;
 			if ( stringTable.find(str + ch) != stringTable.end() )
@@ -85,6 +91,7 @@ void LZWEncoder::getResult( )
 				str = ch;
 			}
 		}
+		//char ch2 = is.get();
 		is.close( );
 	}
 	printBits(os, stringTable[str]);
@@ -155,8 +162,6 @@ void LZWDecoder::getResult()
 	string str;
 	while ( !is.eof() )
 	{
-		if (bytesDecoded >= 10480000)
-			bytesDecoded = bytesDecoded;
 		unsigned short newCode = is.get() << BITS_IN_BYTE | is.get();
 		if ( stringTable[newCode] == "" )
 		{
@@ -170,7 +175,9 @@ void LZWDecoder::getResult()
 		if ( bytesDecoded + str.length() > curFile->numOfBytes )
 		{
 			os << str.substr(0, curFile->numOfBytes - bytesDecoded);
-			bytesDecoded = curFile->numOfBytes;
+			intType l = curFile->numOfBytes - bytesDecoded;
+			bytesDecoded += str.length();
+			str = str.substr(l);
 		}
 		else
 		{
@@ -179,7 +186,7 @@ void LZWDecoder::getResult()
 		}
 		if ( bytesDecoded >= curFile->numOfBytes )
 		{
-			bytesDecoded = 1;
+			bytesDecoded = bytesDecoded - curFile->numOfBytes;
 			os.close();
 			compareFiles( curFile->fileName, path );
 			++curFile;
@@ -193,8 +200,6 @@ void LZWDecoder::getResult()
 			os.open( path.c_str(), ios::binary );
 			while ( curFile != fileInfos.end() && !curFile->numOfBytes )
 			{
-				//is.get();
-				//is.get();
 				os.close();		
 				compareFiles( curFile->fileName, path );
 				++curFile;
@@ -204,6 +209,8 @@ void LZWDecoder::getResult()
 				path += curFile->fileName;
 				os.open( path.c_str(), ios::binary );
 			}
+			if ( bytesDecoded && curFile != fileInfos.end() )
+				os << str;
 		}
 		ch = str[0];
 		if (lastString < (1 << MAX_NUM_OF_BITS) - 1)
