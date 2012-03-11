@@ -41,7 +41,7 @@ int compareFiles( string frstFile, string scndFile )
 	is.open( scndFile.c_str(), ios::binary );
 	buffer2 = readBuffer( is, length2 );
 	is.close();
-	result = ( length1 != length2 || memcmp( buffer1, buffer2, length1 ) );
+	result = (  memcmp( buffer1, buffer2, max(length1, length2) ) );
 	if ( result )
 	{
 		cout << "Files " << frstFile << " and " << scndFile <<" doesn't match\n";

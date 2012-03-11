@@ -267,8 +267,8 @@ int HuffmanDecoder::getResult( )
 		if ( ++bytesDecoded == curFile->numOfBytes )
 		{
 			bytesDecoded = 0;
-			compareFiles( curFile->fileName, path );
 			os.close();
+			compareFiles( curFile->fileName, path );
 			++curFile;
 			if ( curFile != fileInfos.end() )
 			{
